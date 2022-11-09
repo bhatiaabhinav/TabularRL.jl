@@ -10,7 +10,7 @@ mutable struct QLearner <: AbstractHook
     q::Matrix{Float64}
     counts::Matrix{Int}
     s::Int
-    QLearner(π::AbstractPolicy{Int, Int}, q::Matrix{Float64}) = new(π, q)
+    QLearner(π::AbstractPolicy{Int, Int}, q::Matrix{Float64}) = new(π, q, zeros(Int, size(q)), 1)
 end
 
 function prestep(ql::QLearner; env::AbstractMDP, kwargs...)

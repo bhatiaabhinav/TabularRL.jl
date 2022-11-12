@@ -1,7 +1,7 @@
 name = "TabularRL"
 uuid = "f8c2bb02-e045-448a-ad4c-1b1cbf9809d2"
 authors = ["Abhinav Bhatia <abhinav.bhatia.me@gmail.com>"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 MDPs = "11f886ef-95cd-43ae-b218-d50c093ca059"

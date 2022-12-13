@@ -1,9 +1,10 @@
 name = "TabularRL"
 uuid = "f8c2bb02-e045-448a-ad4c-1b1cbf9809d2"
 authors = ["Abhinav Bhatia <abhinav.bhatia.me@gmail.com>"]
-version = "0.2.0"
+version = "0.3.0"
 
 [deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 MDPs = "11f886ef-95cd-43ae-b218-d50c093ca059"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"

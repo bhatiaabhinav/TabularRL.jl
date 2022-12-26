@@ -68,7 +68,7 @@ function poststep(ql::QLearnerWithExperienceReplay; env::AbstractMDP, rng::Abstr
 
     replay_predecessors_of = Set{Int}()
 
-    if !isapprox(cur_val_s, new_val_s, atol=1e-2)
+    if !isapprox(cur_val_s, new_val_s, rtol=1e-2)
         push!(replay_predecessors_of, s)
     end
 
@@ -80,7 +80,7 @@ function poststep(ql::QLearnerWithExperienceReplay; env::AbstractMDP, rng::Abstr
             α = 1.0 / counts[a, s]
             q[a, s] += α * δ
             new_val_s = sum(a -> π(s, a) * q[a, s], action_space(env))
-            if !isapprox(cur_val_s, new_val_s, atol=1e-2)
+            if !isapprox(cur_val_s, new_val_s, rtol=1e-2)
                 push!(replay_predecessors_of, s)
             end
         end

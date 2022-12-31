@@ -18,6 +18,7 @@ end
 
 function prestep(ql::QLearner; env::AbstractMDP, kwargs...)
     ql.s = state(env)
+    nothing
 end
 
 function poststep(ql::QLearner; env::AbstractMDP, kwargs...)
@@ -27,6 +28,7 @@ function poststep(ql::QLearner; env::AbstractMDP, kwargs...)
     counts[a, s] += 1
     α = 1.0 / counts[a, s]
     q[a, s] += α * δ
+    nothing
 end
 
 
@@ -46,6 +48,7 @@ function prestep(ql::QLearnerWithPriotiziedExperienceReplay; env::AbstractMDP, k
     if !haskey(ql.db, ql.s)
         ql.db[ql.s] = CircularBuffer{Tuple{Int, Int, Float64, Int, Bool}}(10000)
     end
+    nothing
 end
 
 function poststep(ql::QLearnerWithPriotiziedExperienceReplay; env::AbstractMDP, rng::AbstractRNG, kwargs...)
@@ -85,6 +88,7 @@ function poststep(ql::QLearnerWithPriotiziedExperienceReplay; env::AbstractMDP, 
             end
         end
     end
+    nothing
 end
 
 
@@ -99,11 +103,12 @@ mutable struct QLearnerWithExperienceReplay <: AbstractHook
     s::Int
     buffer::CircularBuffer{Tuple{Int, Int, Float64, Int, Bool}}
     batch_size::Int
-    QLearnerWithExperienceReplay(π::AbstractPolicy{Int, Int}, q::Matrix{Float64}, γ::Float64; buffer_size=1000000, batch_size=8) = new(π, q, γ, zeros(Int, size(q)), 1, CircularBuffer{Tuple{Int, Int, Float64, Int, Bool}}(buffer_size), batch_size)
+    QLearnerWithExperienceReplay(π::AbstractPolicy{Int, Int}, q::Matrix{Float64}, γ::Float64; buffer_size=1000000, batch_size=32) = new(π, q, γ, zeros(Int, size(q)), 1, CircularBuffer{Tuple{Int, Int, Float64, Int, Bool}}(buffer_size), batch_size)
 end
 
 function prestep(ql::QLearnerWithExperienceReplay; env::AbstractMDP, kwargs...)
     ql.s = state(env)
+    nothing
 end
 
 function poststep(ql::QLearnerWithExperienceReplay; env::AbstractMDP, rng::AbstractRNG, kwargs...)
@@ -116,10 +121,26 @@ function poststep(ql::QLearnerWithExperienceReplay; env::AbstractMDP, rng::Abstr
     q[a, s] += α * δ
     
     push!(buffer, (s, a, r, s′, d))
-    for i in 1:batch_size
-        (s, a, r, s′, d) = rand(rng, buffer)
-        δ = r + (1 - Float64(d)) * γ * sum(a′ -> π(s′, a′) * q[a′, s′], action_space(env)) - q[a, s]
-        α = 1.0 / counts[a, s]
-        q[a, s] += α * δ
-    end
+
+    # while true
+        # replay_counts = zero(counts)
+        # q_ = copy(q)
+        for i in 1:min(length(buffer), batch_size)
+            (s, a, r, s′, d) = length(buffer) > batch_size ? rand(rng, buffer) : buffer[i]
+            δ = r + (1 - Float64(d)) * γ * sum(a′ -> π(s′, a′) * q[a′, s′], action_space(env)) - q[a, s]
+            # replay_counts[a, s] += 1
+            # α = 1.0 / replay_counts[a, s]
+            # α = 0.01
+            α = 1/counts[a, s]
+            q[a, s] += α * δ
+        end
+        # rel_change = maximum((abs.(q - q_)) ./ (abs.(q) .+ 1e-6))
+        # rel_change = maximum((abs.(q - q_)))
+        # println(length(buffer), " ", rel_change)
+        # println(buffer)
+        # println()
+        # rel_change < 0.001 && break
+    # end
+    # println("broken")
+    nothing
 end

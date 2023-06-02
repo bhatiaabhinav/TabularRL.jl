@@ -11,9 +11,12 @@ mutable struct QLearner <: AbstractHook
     π::AbstractPolicy{Int, Int}
     q::Matrix{Float64}
     γ::Float64
+    α::Float64
+    step_size_fn  # accepts (α, t, counts) and returns a new α
     counts::Matrix{Int}
+    t::Int
     s::Int
-    QLearner(π::AbstractPolicy{Int, Int}, q::Matrix{Float64}, γ::Float64) = new(π, q, γ, zeros(Int, size(q)), 1)
+    QLearner(π::AbstractPolicy{Int, Int}, q::Matrix{Float64}, γ::Float64, α::Float64; step_size_fn=nothing) = new(π, q, γ, α, step_size_fn, zeros(Int, size(q)), 1)
 end
 
 function prestep(ql::QLearner; env::AbstractMDP, kwargs...)
@@ -25,8 +28,10 @@ function poststep(ql::QLearner; env::AbstractMDP, kwargs...)
     @unpack π, q, γ, counts, s = ql
     a, r, s′, d = action(env), reward(env), state(env), in_absorbing_state(env)
     δ = r + (1 - Float64(d)) * γ * sum(a′ -> π(s′, a′) * q[a′, s′], action_space(env)) - q[a, s]
+    α = isnothing(ql.step_size_fn) ? ql.α : ql.step_size_fn(ql.α, ql.t, counts)
+    ql.α = α
     counts[a, s] += 1
-    α = 1.0 / counts[a, s]
+    ql.t += 1
     q[a, s] += α * δ
     nothing
 end
